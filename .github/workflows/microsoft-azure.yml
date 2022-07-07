@@ -1,4 +1,5 @@
-name: MICROSOFT AZURE
+name: RDP1
+
 on: workflow_dispatch
 
 jobs:
@@ -8,37 +9,25 @@ jobs:
     timeout-minutes: 9999
 
     steps:
-
-    - name: Download ngrok
-      run: |
-        Invoke-WebRequest https://github.com/sadewa999/RDP/blob/main/MICROSOFT/ngrok.zip -OutFile ngrok.zip
-        Invoke-WebRequest https://raw.githubusercontent.com/sadewa999/RDP/main/MICROSOFT/start.bat -OutFile start.bat
-
-    - name: Extract ngrok Files
-      run: Expand-Archive ngrok.zip
-
-    - name: Connecting ngrok Account
-      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+    - uses: actions/checkout@v2
+    - name: Copy NSSM & Ngrok to Windows Directory.
+      run: | 
+        copy nssm.exe C:\Windows\System32
+        copy ngrok.exe C:\Windows\System32
+    - name: Connect your NGROK account
+      run: .\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
       env:
         NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
-
-    - name: Enable RDP Access
-      run: |
+    - name: Make YML file for NGROK.
+      run: start NGROK-AP.bat
+    - name: Enable RDP Access.
+      run: | 
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
-        copy winrar.exe C:\Users\Public\Desktop\winrar.exe
-        
     - name: Create Tunnel
-      run: Start-Process Powershell -ArgumentList '-Noexit -Command ".\ngrok\ngrok.exe tcp 3389"'
-
-    - name: Connect to RDP  #CPU 2 Core - 7GB Ram - 256 SSD#
-      run: cmd /c start.bat
-
-    - name: Install Winrar
-      run: cmd /c C:\Users\Public\Desktop\winrar.exe winrar.exe /s
-      
-    - name: TimeCount
-      run: |
-        Invoke-WebRequest https://raw.githubusercontent.com/sadewa999/RDP/main/MICROSOFT/loop.ps1 -OutFile loop.ps1
-        ./loop.ps1
+      run: sc start ngrok
+    - name: Connect to your RDP 2core-7GB Ram Win10.
+      run: cmd /c NGROK-CHECK.bat
+    - name: All Done! You can close Tab now!
+      run: cmd /c loop.bat 
